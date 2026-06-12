@@ -1,0 +1,141 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Default deny-all safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Global helper primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isEmailVerified() {
+      // In the local workspace or Google Sign-In, email is automatically verified
+      return request.auth.token.email_verified == true;
+    }
+    
+    function incoming() {
+      return request.resource.data;
+    }
+    
+    function existing() {
+      return resource.data;
+    }
+    
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Entity Schema Validators
+    function isValidUser(data) {
+      return data.uid is string 
+          && data.uid == request.auth.uid
+          && data.email is string 
+          && data.email.size() <= 256
+          && data.updatedAt is number
+          && data.theme is map
+          && data.theme.mode in ['light', 'dark']
+          && data.theme.accentColor is string && data.theme.accentColor.size() <= 32
+          && data.theme.layout in ['grid', 'ios']
+          && data.theme.folderLayout in ['sections', 'boxes']
+          && data.theme.showTodoList is bool
+          && data.theme.background is map
+          && data.theme.background.type in ['color', 'gradient', 'image']
+          && data.theme.background.value is string && data.theme.background.value.size() <= 2048;
+    }
+
+    function isValidWebsite(data, userId) {
+      return data.id is string && data.id.size() <= 128
+          && data.userId is string && data.userId == userId
+          && data.name is string && data.name.size() <= 256
+          && data.url is string && data.url.size() <= 2048
+          && data.folderId is string && data.folderId.size() <= 128
+          && data.isPinned is bool
+          && data.createdAt is number
+          && data.updatedAt is number;
+    }
+
+    function isValidFolder(data, userId) {
+      return data.id is string && data.id.size() <= 128
+          && data.userId is string && data.userId == userId
+          && data.name is string && data.name.size() <= 256
+          && data.order is number
+          && data.updatedAt is number;
+    }
+
+    function isValidTodo(data, userId) {
+      return data.id is string && data.id.size() <= 128
+          && data.userId is string && data.userId == userId
+          && data.text is string && data.text.size() <= 512
+          && data.completed is bool
+          && data.createdAt is number
+          && data.updatedAt is number;
+    }
+
+    // Match patterns
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) 
+                           && isEmailVerified() 
+                           && isValidUser(incoming());
+      allow delete: if isOwner(userId);
+
+      // Websites subcollection
+      match /websites/{websiteId} {
+        allow read, list: if isOwner(userId);
+        allow create: if isOwner(userId) 
+                     && isEmailVerified() 
+                     && isValidId(websiteId)
+                     && isValidWebsite(incoming(), userId);
+        allow update: if isOwner(userId) 
+                     && isEmailVerified() 
+                     && isValidWebsite(incoming(), userId)
+                     && incoming().createdAt == existing().createdAt
+                     && incoming().id == existing().id
+                     && incoming().userId == existing().userId
+                     && (incoming().diff(existing()).affectedKeys().hasAny(['name', 'url', 'folderId', 'isPinned', 'updatedAt']));
+        allow delete: if isOwner(userId);
+      }
+
+      // Folders subcollection
+      match /folders/{folderId} {
+        allow read, list: if isOwner(userId);
+        allow create: if isOwner(userId) 
+                     && isEmailVerified() 
+                     && isValidId(folderId)
+                     && isValidFolder(incoming(), userId);
+        allow update: if isOwner(userId) 
+                     && isEmailVerified() 
+                     && isValidFolder(incoming(), userId)
+                     && incoming().id == existing().id
+                     && incoming().userId == existing().userId
+                     && (incoming().diff(existing()).affectedKeys().hasAny(['name', 'order', 'updatedAt']));
+        allow delete: if isOwner(userId);
+      }
+
+      // Todos subcollection
+      match /todos/{todoId} {
+        allow read, list: if isOwner(userId);
+        allow create: if isOwner(userId) 
+                     && isEmailVerified() 
+                     && isValidId(todoId)
+                     && isValidTodo(incoming(), userId);
+        allow update: if isOwner(userId) 
+                     && isEmailVerified() 
+                     && isValidTodo(incoming(), userId)
+                     && incoming().id == existing().id
+                     && incoming().userId == existing().userId
+                     && incoming().createdAt == existing().createdAt
+                     && (incoming().diff(existing()).affectedKeys().hasAny(['text', 'completed', 'updatedAt']));
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+} rules_version = '2';

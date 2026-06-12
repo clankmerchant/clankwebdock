@@ -1,0 +1,6 @@
+{
+  "name": "Website Hub",
+  "description": "A personalized dashboard for organizing and quickly accessing your favorite websites with folders, drag-and-drop, and theme customization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

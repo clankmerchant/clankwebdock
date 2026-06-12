@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user profile and theme preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The Google User UID" },
+        "email": { "type": "string", "description": "The user's verified email" },
+        "theme": {
+          "type": "object",
+          "description": "ThemeConfig and layouts",
+          "properties": {
+            "mode": { "type": "string", "enum": ["light", "dark"] },
+            "accentColor": { "type": "string" },
+            "layout": { "type": "string", "enum": ["grid", "ios"] },
+            "folderLayout": { "type": "string", "enum": ["sections", "boxes"] },
+            "showTodoList": { "type": "boolean" },
+            "background": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "enum": ["color", "gradient", "image"] },
+                "value": { "type": "string" }
+              },
+              "required": ["type", "value"]
+            }
+          },
+          "required": ["mode", "accentColor", "layout", "folderLayout", "showTodoList", "background"]
+        },
+        "updatedAt": { "type": "number", "description": "Timestamp of the last update" }
+      },
+      "required": ["uid", "email", "theme", "updatedAt"]
+    },
+    "Website": {
+      "title": "Website Bookmark",
+      "description": "A single website bookmarked by the user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier" },
+        "userId": { "type": "string", "description": "UID of the owner" },
+        "name": { "type": "string", "description": "Human name of the website" },
+        "url": { "type": "string", "description": "Standard absolute URL" },
+        "folderId": { "type": "string", "description": "Reference to the folder" },
+        "isPinned": { "type": "boolean" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "userId", "name", "url", "folderId", "isPinned", "createdAt", "updatedAt"]
+    },
+    "Folder": {
+      "title": "Folder Category",
+      "description": "A group used to categorize bookmarks",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier" },
+        "userId": { "type": "string", "description": "UID of the owner" },
+        "name": { "type": "string" },
+        "order": { "type": "integer" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "userId", "name", "order", "updatedAt"]
+    },
+    "Todo": {
+      "title": "To Do Task",
+      "description": "A task in the user's checklist",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier" },
+        "userId": { "type": "string", "description": "UID of the owner" },
+        "text": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "userId", "text", "completed", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "The user document storing theme preferences"
+    },
+    "/users/{userId}/websites/{websiteId}": {
+      "schema": "Website",
+      "description": "All bookmarked websites for a specific user"
+    },
+    "/users/{userId}/folders/{folderId}": {
+      "schema": "Folder",
+      "description": "All folders defined by the user"
+    },
+    "/users/{userId}/todos/{todoId}": {
+      "schema": "Todo",
+      "description": "All checklist items for a specific user"
+    }
+  }
+}
