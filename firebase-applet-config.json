@@ -1,10 +1,10 @@
 {
-  "projectId": "amped-pentameter-1f4nj",
-  "appId": "1:171838598531:web:14a3105ce76a9301e0dab6",
-  "apiKey": "AIzaSyDvpnt5RsnzdHucCC1qPtj50FnixGzUGDI",
-  "authDomain": "amped-pentameter-1f4nj.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-dbe36a63-d322-4f5b-803a-840e09699be9",
-  "storageBucket": "amped-pentameter-1f4nj.firebasestorage.app",
-  "messagingSenderId": "171838598531",
-  "measurementId": ""
+  "projectId": "webdock-a468b",
+  "appId": "1:767574838510:web:8e41ca7b8b8321decb77ff",
+  "apiKey": "AIzaSyDdLjMoTD3kKEKfK58QWLYIYHV3HRfUdI8",
+  "authDomain": "webdock-a468b.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "webdock-a468b.firebasestorage.app",
+  "messagingSenderId": "767574838510",
+  "measurementId": "G-P0GCWB7PZG"
 }
