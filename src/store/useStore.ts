@@ -51,6 +51,8 @@ export const useStore = create<AppStore>()(
         layout: 'ios',
         folderLayout: 'boxes',
         showTodoList: true,
+        useSimpleIcons: false,
+        faviconService: 'duckduckgo',
         background: { type: 'color', value: '#0f172a' },
       },
       searchQuery: '',
