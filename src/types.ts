@@ -27,6 +27,8 @@ export interface ThemeConfig {
   layout: 'grid' | 'ios';
   folderLayout: 'sections' | 'boxes';
   showTodoList: boolean;
+  useSimpleIcons?: boolean;
+  faviconService?: 'duckduckgo' | 'google' | 'iconhorse' | 'cascade';
   background: {
     type: 'color' | 'gradient' | 'image';
     value: string;
