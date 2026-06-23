@@ -12,13 +12,22 @@ import { subscribeToUserCloudData, clearCloudSubscriptions } from './lib/firebas
 // --- Components ---
 
 const WebsiteIcon = ({ url, name, size = 'md' }: { url: string, name: string, size?: 'sm' | 'md' }) => {
-  const [hasError, setHasError] = useState(false);
-  const initials = name ? name.trim().charAt(0).toUpperCase() : '?';
-  const faviconUrl = getFavicon(url);
+  const { theme } = useStore();
+  const provider = theme.faviconService || 'duckduckgo';
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    setHasError(false);
-  }, [url]);
+    setAttempt(0);
+  }, [url, provider]);
+
+  const initials = name ? name.trim().charAt(0).toUpperCase() : '?';
+
+  let domain = '';
+  try {
+    domain = new URL(url).hostname;
+  } catch {
+    domain = url.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+  }
 
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -38,7 +47,62 @@ const WebsiteIcon = ({ url, name, size = 'md' }: { url: string, name: string, si
   ];
   const colorClass = colors[Math.abs(hash) % colors.length];
 
-  if (hasError || !faviconUrl) {
+  const renderSimpleIcon = () => {
+    let fontSizeClass = "text-sm";
+    if (size === 'sm') {
+      fontSizeClass = "text-[6px] leading-[8px]";
+    } else {
+      if (name.length > 12) {
+        fontSizeClass = "text-[9px] leading-tight";
+      } else if (name.length > 8) {
+        fontSizeClass = "text-xs";
+      }
+    }
+
+    return (
+      <div 
+        className={cn(
+          "flex items-center justify-center rounded-lg font-bold select-none shadow-sm px-1 text-center w-full h-full overflow-hidden leading-snug break-all uppercase",
+          colorClass
+        )}
+      >
+        <span className={cn("truncate max-w-full block", fontSizeClass)}>{name}</span>
+      </div>
+    );
+  };
+
+  if (theme.useSimpleIcons) {
+    return renderSimpleIcon();
+  }
+
+  const getSourcesList = () => {
+    const list: string[] = [];
+    if (!domain) return list;
+
+    if (provider === 'google') {
+      list.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=64`);
+      list.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
+      list.push(`https://icon.horse/icon/${domain}`);
+    } else if (provider === 'iconhorse') {
+      list.push(`https://icon.horse/icon/${domain}`);
+      list.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
+      list.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=64`);
+    } else if (provider === 'cascade') {
+      list.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
+      list.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=64`);
+      list.push(`https://icon.horse/icon/${domain}`);
+    } else { // default 'duckduckgo'
+      list.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
+      list.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=64`);
+      list.push(`https://icon.horse/icon/${domain}`);
+    }
+    return list;
+  };
+
+  const sources = getSourcesList();
+  const currentSrc = sources[attempt];
+
+  if (attempt >= sources.length || !domain || !currentSrc) {
     return (
       <div 
         className={cn(
@@ -54,11 +118,13 @@ const WebsiteIcon = ({ url, name, size = 'md' }: { url: string, name: string, si
 
   return (
     <img
-      src={faviconUrl}
+      src={currentSrc}
       alt=""
       referrerPolicy="no-referrer"
       className="h-full w-full object-contain"
-      onError={() => setHasError(true)}
+      onError={() => {
+        setAttempt(prev => prev + 1);
+      }}
     />
   );
 };
@@ -829,6 +895,42 @@ export default function App() {
                     theme.showTodoList ? "translate-x-6" : "translate-x-1"
                   )} />
                 </button>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-t border-gray-100 dark:border-gray-800/50 pt-3">
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium dark:text-gray-200">Simple Icons</label>
+                  <span className="text-[11px] text-gray-400">Display website name instead of favicon</span>
+                </div>
+                <button
+                  onClick={() => setTheme({ useSimpleIcons: !theme.useSimpleIcons })}
+                  className={cn(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                    theme.useSimpleIcons ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"
+                  )}
+                >
+                  <span className={cn(
+                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                    theme.useSimpleIcons ? "translate-x-6" : "translate-x-1"
+                  )} />
+                </button>
+              </div>
+
+              <div className="space-y-2 border-t border-gray-100 dark:border-gray-800/50 pt-3">
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium dark:text-gray-200">Favicon Provider</label>
+                  <span className="text-[11px] text-gray-400">Alternative fallback providers to load your website icons</span>
+                </div>
+                <select
+                  value={theme.faviconService || 'duckduckgo'}
+                  onChange={(e) => setTheme({ faviconService: e.target.value as any })}
+                  className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 cursor-pointer"
+                >
+                  <option value="duckduckgo">DuckDuckGo IP3 (Overall Best Compatibility & Privacy)</option>
+                  <option value="google">Google S2 (Standard Icon Service)</option>
+                  <option value="iconhorse">Icon Horse (High Contrast Fallback)</option>
+                  <option value="cascade">Auto-Fallback Cascade (DDG ➔ Google ➔ Icon Horse)</option>
+                </select>
               </div>
 
               <div className="space-y-2">
