@@ -16,6 +16,7 @@
             "layout": { "type": "string", "enum": ["grid", "ios"] },
             "folderLayout": { "type": "string", "enum": ["sections", "boxes"] },
             "showTodoList": { "type": "boolean" },
+            "useSimpleIcons": { "type": "boolean" },
             "background": {
               "type": "object",
               "properties": {
