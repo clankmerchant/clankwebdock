@@ -46,6 +46,7 @@ service cloud.firestore {
           && data.theme.layout in ['grid', 'ios']
           && data.theme.folderLayout in ['sections', 'boxes']
           && data.theme.showTodoList is bool
+          && (!('useSimpleIcons' in data.theme) || data.theme.useSimpleIcons is bool)
           && data.theme.background is map
           && data.theme.background.type in ['color', 'gradient', 'image']
           && data.theme.background.value is string && data.theme.background.value.size() <= 2048;
